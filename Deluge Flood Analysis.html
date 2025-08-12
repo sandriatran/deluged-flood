@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deluged Floods - Understanding Statistical Flood Uncertainty in the Anthropocene</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --magenta: #e91e63;
+            --green: #00d4aa;
+            --dark-magenta: #ad1457;
+            --dark-green: #00897b;
+            --black: #000;
+            --white: #fff;
+            --gray: #6c757d;
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, var(--magenta) 0%, var(--dark-magenta) 100%);
+            color: var(--white);
+            overflow-x: hidden;
+            position: relative;
+            transition: background 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: none;
+        }
+        
+        /* Hide default cursor everywhere */
+        body * {
+            cursor: none !important;
+        }
+        
+        /* Blend mode effects */
+        .hero-text h1 {
+            font-size: clamp(4rem, 8vw, 7rem);
+            font-weight: 900;
+            letter-spacing: -0.03em;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--white) 0%, rgba(255, 255, 255, 0.7) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+        }
+
+        /* Grid Pattern Overlay */
+        .grid-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Animated Wave Lines */
+        .wave-line {
+            position: fixed;
+            width: 200%;
+            height: 300px;
+            pointer-events: none;
+            z-index: 2;
+            opacity: 0.1;
+        }
+
+        .wave-line svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .wave-line-1 {
+            top: 10%;
+            animation: wave1 20s linear infinite;
+        }
+
+        .wave-line-2 {
+            top: 40%;
+            animation: wave2 25s linear infinite reverse;
+        }
+
+        .wave-line-3 {
+            top: 70%;
+            animation: wave1 30s linear infinite;
+        }
+
+        @keyframes wave1 {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        @keyframes wave2 {
+            0% { transform: translateX(-50%); }
+            100% { transform: translateX(0); }
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            padding: 20px 50px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+        }
+
+        nav a {
+            color: var(--white);
+            text-decoration: none;
+            font-size: 14px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            opacity: 0.8;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        nav a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--green);
+            transition: width 0.3s ease;
+        }
+
+        nav a:hover, nav a.active {
+            opacity: 1;
+        }
+
+        nav a:hover::after, nav a.active::after {
+            width: 100%;
+        }
+
+        /* Main Container */
+        .container {
+            position: relative;
+            z-index: 10;
+            padding-top: 80px;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 50px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-content {
+            max-width: 1200px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center;
+        }
+
+        .hero-text h1 {
+            font-size: clamp(4rem, 8vw, 7rem);
+            font-weight: 900;
+            letter-spacing: -0.03em;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--white) 0%, rgba(255, 255, 255, 0.7) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+        }
+
+        .hero-text h1 span {
+            display: block;
+            font-size: 0.8em;
+            color: var(--green);
+            -webkit-text-fill-color: var(--green);
+        }
+
+        .hero-text .subtitle {
+            font-size: 1.5rem;
+            font-weight: 300;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .hero-text .description {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            opacity: 0.8;
+            margin-bottom: 40px;
+        }
+
+        .hero-visual {
+            position: relative;
+            height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Animated Circles */
+        .swan-circles {
+            position: relative;
+            width: 400px;
+            height: 400px;
+        }
+
+        .swan-circle {
+            position: absolute;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .white-swan {
+            width: 120px;
+            height: 120px;
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--black);
+            top: 10%;
+            left: 10%;
+            animation: float1 8s ease-in-out infinite;
+        }
+
+        .gray-swan {
+            width: 100px;
+            height: 100px;
+            background: rgba(108, 117, 125, 0.9);
+            color: var(--white);
+            top: 40%;
+            right: 20%;
+            animation: float2 10s ease-in-out infinite;
+        }
+
+        .black-swan {
+            width: 140px;
+            height: 140px;
+            background: rgba(0, 0, 0, 0.9);
+            color: var(--white);
+            bottom: 20%;
+            left: 30%;
+            animation: float3 12s ease-in-out infinite;
+        }
+
+        @keyframes float1 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(20px, -20px) scale(1.05); }
+        }
+
+        @keyframes float2 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(-30px, 10px) scale(0.95); }
+        }
+
+        @keyframes float3 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(10px, -30px) scale(1.1); }
+        }
+
+        .swan-circle:hover {
+            transform: scale(1.2);
+            z-index: 10;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
+            50% { box-shadow: 0 0 20px 10px rgba(255, 255, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+        }
+
+        /* Section Styles */
+        section {
+            padding: 100px 50px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .section-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h2 {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 900;
+            margin-bottom: 40px;
+            text-transform: uppercase;
+            letter-spacing: -0.02em;
+        }
+
+        /* Poisson Section */
+        .poisson-section {
+            background: linear-gradient(135deg, var(--green) 0%, var(--dark-green) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .poisson-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: start;
+        }
+
+        .formula-box {
+            background: rgba(0, 0, 0, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .formula {
+            font-family: 'Courier New', monospace;
+            font-size: 1.2rem;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            border-left: 4px solid var(--magenta);
+            overflow-x: auto;
+        }
+
+        .data-points {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .data-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .data-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .data-card .number {
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--magenta);
+            margin-bottom: 10px;
+        }
+
+        .data-card .label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Process Section */
+        .process-section {
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.7) 100%);
+        }
+
+        .process-steps {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+            margin-top: 60px;
+        }
+
+        .process-step {
+            text-align: center;
+            position: relative;
+        }
+
+        .step-icon {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 30px;
+            background: linear-gradient(135deg, var(--magenta) 0%, var(--dark-magenta) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .step-icon::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: rotate(45deg);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        .process-step h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: var(--green);
+        }
+
+        /* Analysis Section */
+        .analysis-section {
+            background: linear-gradient(135deg, var(--white) 0%, #f0f0f0 100%);
+            color: var(--black);
+        }
+
+        .analysis-section h2 {
+            color: var(--black);
+        }
+
+        .graph-container {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            margin-top: 40px;
+        }
+
+        .chart-placeholder {
+            height: 400px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Interactive Chart Bars */
+        .chart-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            height: 300px;
+            padding: 20px;
+        }
+
+        .chart-bar {
+            flex: 1;
+            background: linear-gradient(135deg, var(--magenta) 0%, var(--dark-magenta) 100%);
+            border-radius: 5px 5px 0 0;
+            transition: all 0.3s ease;
+            position: relative;
+            cursor: pointer;
+            min-height: 20px;
+        }
+
+        .chart-bar:hover {
+            transform: scaleY(1.1);
+            filter: brightness(1.1);
+        }
+
+        .chart-bar::after {
+            content: attr(data-value);
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .chart-bar:hover::after {
+            opacity: 1;
+        }
+
+        /* Anthropocene Section */
+        .anthropocene-section {
+            background: linear-gradient(135deg, #2c5530 0%, #1e3a21 100%);
+            position: relative;
+        }
+
+        .impact-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 40px;
+            margin-top: 60px;
+        }
+
+        .impact-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 40px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .impact-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-5px);
+        }
+
+        .impact-card h3 {
+            color: var(--green);
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+
+        .impact-card ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .impact-card li {
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .impact-card li:last-child {
+            border-bottom: none;
+        }
+
+        /* Summary Section */
+        .summary-section {
+            background: linear-gradient(135deg, var(--black) 0%, #1a1a1a 100%);
+            text-align: center;
+            padding: 150px 50px;
+        }
+
+        .summary-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .summary-points {
+            display: grid;
+            gap: 40px;
+            margin-top: 60px;
+            text-align: left;
+        }
+
+        .summary-point {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 30px;
+            border-radius: 15px;
+            border-left: 4px solid var(--green);
+        }
+
+        .summary-point h3 {
+            color: var(--green);
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--black);
+            padding: 40px 50px;
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .author {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: var(--green);
+        }
+
+        .date {
+            opacity: 0.6;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 968px) {
+            .hero-content,
+            .poisson-grid,
+            .impact-grid {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+
+            .process-steps {
+                grid-template-columns: 1fr;
+            }
+
+            .data-points {
+                grid-template-columns: 1fr;
+            }
+
+            nav ul {
+                flex-wrap: wrap;
+                gap: 20px;
+            }
+
+            h1 {
+                font-size: 3rem !important;
+            }
+        }
+
+        /* Floating particles */
+        .particle {
+            position: fixed;
+            pointer-events: none;
+            opacity: 0.3;
+            z-index: 1;
+        }
+
+        .particle-1 {
+            width: 4px;
+            height: 4px;
+            background: var(--green);
+            top: 20%;
+            left: 10%;
+            animation: particleFloat 15s infinite;
+        }
+
+        .particle-2 {
+            width: 6px;
+            height: 6px;
+            background: var(--white);
+            top: 60%;
+            right: 20%;
+            animation: particleFloat 20s infinite reverse;
+        }
+
+        .particle-3 {
+            width: 3px;
+            height: 3px;
+            background: var(--magenta);
+            top: 80%;
+            left: 30%;
+            animation: particleFloat 18s infinite;
+        }
+
+        @keyframes particleFloat {
+            0%, 100% {
+                transform: translate(0, 0);
+            }
+            25% {
+                transform: translate(100px, -100px);
+            }
+            50% {
+                transform: translate(-50px, -200px);
+            }
+            75% {
+                transform: translate(50px, -50px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Grid Overlay -->
+    <div class="grid-overlay"></div>
+    
+    <!-- Custom Cursor -->
+    <div id="cursor-follower" style="
+        position: fixed;
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(255, 255, 255, 0.9);
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 9999;
+        transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                    height 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                    border 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                    background 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                    box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                    opacity 0.3s ease;
+        mix-blend-mode: exclusion;
+        transform: translate(-50%, -50%);
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        opacity: 0;
+    "></div>
+    
+    <div id="cursor-dot" style="
+        position: fixed;
+        width: 8px;
+        height: 8px;
+        background: rgba(255, 255, 255, 1);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 10000;
+        transform: translate(-50%, -50%);
+        mix-blend-mode: exclusion;
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+        transition: width 0.15s ease, height 0.15s ease, box-shadow 0.15s ease, opacity 0.3s ease;
+        opacity: 0;
+    "></div>
+    
+    <!-- Animated Wave Lines -->
+    <div class="wave-line wave-line-1">
+        <svg>
+            <path d="M0,150 Q200,50 400,150 T800,150 T1200,150 T1600,150" stroke="rgba(255,255,255,0.2)" stroke-width="2" fill="none"/>
+        </svg>
+    </div>
+    <div class="wave-line wave-line-2">
+        <svg>
+            <path d="M0,150 Q200,250 400,150 T800,150 T1200,150 T1600,150" stroke="rgba(0,212,170,0.2)" stroke-width="2" fill="none"/>
+        </svg>
+    </div>
+    <div class="wave-line wave-line-3">
+        <svg>
+            <path d="M0,150 Q200,100 400,150 T800,150 T1200,150 T1600,150" stroke="rgba(255,255,255,0.1)" stroke-width="2" fill="none"/>
+        </svg>
+    </div>
+
+    <!-- Floating Particles -->
+    <div class="particle particle-1"></div>
+    <div class="particle particle-2"></div>
+    <div class="particle particle-3"></div>
+
+    <!-- Navigation -->
+    <nav>
+        <ul>
+            <li><a href="#home" class="active">Home</a></li>
+            <li><a href="#poisson">Poisson Model</a></li>
+            <li><a href="#process">Process</a></li>
+            <li><a href="#analysis">Analysis</a></li>
+            <li><a href="#anthropocene">Anthropocene</a></li>
+            <li><a href="#summary">Summary</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Hero Section -->
+        <section id="home" class="hero">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1>Deluged <span>Floods</span></h1>
+                    <p class="subtitle">Predicting rare, random numbers of floods within a fixed interval of time</p>
+                    <p class="description">
+                        Understanding Statistical Flood Uncertainty in the Anthropocene through Poisson modeling 
+                        and environmental data science. A CS109 exploration of how climate change transforms 
+                        rare events into regular occurrences.
+                    </p>
+                    <div class="data-points">
+                        <div class="data-card hero-data-card" style="background: rgba(0, 212, 170, 0.2); border: 1px solid rgba(0, 212, 170, 0.4);">
+                            <div class="number" style="color: var(--green);">29</div>
+                            <div class="label">Years Analyzed</div>
+                        </div>
+                        <div class="data-card hero-data-card" style="background: rgba(0, 212, 170, 0.2); border: 1px solid rgba(0, 212, 170, 0.4);">
+                            <div class="number" style="color: var(--green);">6,344</div>
+                            <div class="label">Flood Events</div>
+                        </div>
+                        <div class="data-card hero-data-card" style="background: rgba(0, 212, 170, 0.2); border: 1px solid rgba(0, 212, 170, 0.4);">
+                            <div class="number" style="color: var(--green);">219</div>
+                            <div class="label">Expected/Month</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="hero-visual">
+                    <div class="swan-circles">
+                        <div class="swan-circle white-swan">White Swan<br><span style="font-size: 9px; opacity: 0.8;">Predictable</span></div>
+                        <div class="swan-circle gray-swan">Gray Swan<br><span style="font-size: 9px; opacity: 0.8;">Extreme</span></div>
+                        <div class="swan-circle black-swan">Black Swan<br><span style="font-size: 9px; opacity: 0.8;">16.6:1 Ratio</span></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Poisson Section -->
+        <section id="poisson" class="poisson-section">
+            <div class="section-content">
+                <h2>Poisson Distribution: Testing the Model</h2>
+                <div class="poisson-grid">
+                    <div class="formula-box">
+                        <h3>Mathematical Framework</h3>
+                        <div class="formula">
+                            P(Y = k) = (λᵏ × e⁻λᵗ) / k!
+                        </div>
+                        <p>Where:</p>
+                        <ul style="list-style: none; padding: 20px 0;">
+                            <li>• Y = number of flood events</li>
+                            <li>• λ = average rate (218.76 floods/September)</li>
+                            <li>• t = time interval</li>
+                            <li>• k = number of events</li>
+                        </ul>
+                        <div class="formula">
+                            95% CI: [213.38, 224.14]
+                        </div>
+                        <div style="background: rgba(255, 0, 100, 0.2); padding: 15px; border-radius: 10px; margin-top: 20px;">
+                            <strong>⚠️ Model Limitation:</strong><br>
+                            Variance/Mean = 16.6:1<br>
+                            (Should be 1:1 for Poisson)
+                        </div>
+                    </div>
+                    <div>
+                        <h3>Why Poisson Shows Limitations</h3>
+                        <ul style="list-style: none; padding: 20px 0; line-height: 2;">
+                            <li>✓ Historical assumption: Independent events</li>
+                            <li>✗ Reality: Climate-driven clustering</li>
+                            <li>✗ Significant overdispersion (16.6:1 ratio)</li>
+                            <li>✗ Anthropogenic factors create dependence</li>
+                            <li>✓ Evidence of changing patterns</li>
+                        </ul>
+                        <div class="data-card" style="margin-top: 30px;">
+                            <div class="number">λ = 218.76</div>
+                            <div class="label">September Floods (1996-2024)</div>
+                        </div>
+                        <div class="data-card" style="margin-top: 20px;">
+                            <div class="number">s² = 3,633</div>
+                            <div class="label">Sample Variance</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Process Section -->
+        <section id="process" class="process-section">
+            <div class="section-content">
+                <h2>Process</h2>
+                <div class="process-steps">
+                    <div class="process-step">
+                        <div class="step-icon">📊</div>
+                        <h3>Data Collection</h3>
+                        <p>Analyzed 29 years of NOAA Storm Events data (1996-2024), focusing on September floods across all US states. 
+                        Processed 6,344 flood events from Coastal, Flash, Flood, and Lakeshore flood categories.</p>
+                    </div>
+                    <div class="process-step">
+                        <div class="step-icon">∫</div>
+                        <h3>Poisson Modeling</h3>
+                        <p>Applied Poisson distribution with λ = 218.76, calculated confidence intervals, and discovered significant 
+                        overdispersion (16.6:1 ratio) that challenges fundamental assumptions.</p>
+                    </div>
+                    <div class="process-step">
+                        <div class="step-icon">📈</div>
+                        <h3>Statistical Discovery</h3>
+                        <p>Variance of 3,633 vs mean of 219 indicates climate patterns are affecting flood distributions. 
+                        September 2025 prediction: 219±5 floods based on long-term average.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Analysis Section -->
+        <section id="analysis" class="analysis-section">
+            <div class="section-content">
+                <h2>Statistical Analysis</h2>
+                
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-top: 40px;">
+                    <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+                        <h4 style="color: var(--magenta); margin-bottom: 15px;">Sample Mean</h4>
+                        <p style="color: var(--black); font-size: 2rem; font-weight: 900;">218.76</p>
+                        <p style="color: var(--gray); font-size: 0.9rem;">floods per September</p>
+                    </div>
+                    <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+                        <h4 style="color: var(--magenta); margin-bottom: 15px;">Overdispersion</h4>
+                        <p style="color: var(--black); font-size: 2rem; font-weight: 900;">16.6:1</p>
+                        <p style="color: var(--gray); font-size: 0.9rem;">variance/mean ratio</p>
+                    </div>
+                    <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+                        <h4 style="color: var(--magenta); margin-bottom: 15px;">2025 Prediction</h4>
+                        <p style="color: var(--black); font-size: 2rem; font-weight: 900;">219±5</p>
+                        <p style="color: var(--gray); font-size: 0.9rem;">95% CI: [213, 224]</p>
+                    </div>
+                </div>
+                
+                <div style="background: rgba(233, 30, 99, 0.1); padding: 40px; border-radius: 20px; margin-top: 40px; border: 2px solid rgba(233, 30, 99, 0.3);">
+                    <h3 style="color: var(--black); margin-bottom: 20px;">🔬 Key Discovery: Statistical Insights</h3>
+                    <p style="color: var(--black); font-size: 1.1rem; line-height: 1.8;">
+                        The 16.6:1 overdispersion ratio represents a significant violation of Poisson assumptions 
+                        in environmental data. This isn't just statistical noise—it suggests that climate patterns 
+                        are introducing clustering and dependencies into flood events. The variance of 3,633 compared to a mean 
+                        of 219 indicates that traditional probability models may need adjustment to capture the increasing 
+                        variability in Anthropocene weather patterns.
+                    </p>
+                </div>
+                
+                <!-- Bell Curve Visualization -->
+                <div style="background: white; padding: 40px; border-radius: 20px; margin-top: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.1);">
+                    <h3 style="color: var(--black); margin-bottom: 30px; text-align: center; font-size: 1.5rem;">
+                        Distribution Analysis: Reality vs Theory
+                    </h3>
+                    
+                    <!-- SVG Bell Curve Comparison -->
+                    <div style="position: relative; height: 300px; margin: 30px 0;">
+                        <svg viewBox="0 0 600 300" style="width: 100%; height: 100%;">
+                            <!-- Grid lines -->
+                            <g stroke="#e0e0e0" stroke-width="0.5">
+                                <line x1="50" y1="250" x2="550" y2="250"/>
+                                <line x1="50" y1="200" x2="550" y2="200"/>
+                                <line x1="50" y1="150" x2="550" y2="150"/>
+                                <line x1="50" y1="100" x2="550" y2="100"/>
+                                <line x1="50" y1="50" x2="550" y2="50"/>
+                            </g>
+                            
+                            <!-- Axes -->
+                            <line x1="50" y1="250" x2="550" y2="250" stroke="#333" stroke-width="2"/>
+                            <line x1="50" y1="50" x2="50" y2="250" stroke="#333" stroke-width="2"/>
+                            
+                            <!-- Theoretical Bell Curve (Normal Distribution) -->
+                            <path d="M 50 240 Q 150 230, 200 180 T 300 80 T 400 180 Q 450 230, 550 240" 
+                                  fill="none" stroke="#00d4aa" stroke-width="3" opacity="0.7" stroke-dasharray="5,5"/>
+                            
+                            <!-- Actual Distribution (showing overdispersion) -->
+                            <path d="M 50 240 Q 120 235, 150 220 T 200 190 T 250 160 T 300 120 T 350 160 T 400 190 T 450 220 Q 500 235, 550 240" 
+                                  fill="rgba(233, 30, 99, 0.1)" stroke="#e91e63" stroke-width="3"/>
+                            
+                            <!-- Data points -->
+                            <g fill="#e91e63" opacity="0.8">
+                                <circle cx="90" cy="200" r="4"/>
+                                <circle cx="120" cy="240" r="4"/>
+                                <circle cx="150" cy="220" r="4"/>
+                                <circle cx="180" cy="190" r="4"/>
+                                <circle cx="210" cy="210" r="4"/>
+                                <circle cx="240" cy="220" r="4"/>
+                                <circle cx="270" cy="180" r="4"/>
+                                <circle cx="300" cy="170" r="4"/>
+                                <circle cx="330" cy="160" r="4"/>
+                                <circle cx="360" cy="230" r="4"/>
+                                <circle cx="390" cy="190" r="4"/>
+                                <circle cx="420" cy="210" r="4"/>
+                                <circle cx="450" cy="195" r="4"/>
+                                <circle cx="480" cy="100" r="4"/>
+                                <circle cx="510" cy="240" r="4"/>
+                            </g>
+                            
+                            <!-- Labels -->
+                            <text x="300" y="280" text-anchor="middle" fill="#666" font-size="12">Number of Floods</text>
+                            <text x="30" y="150" text-anchor="middle" fill="#666" font-size="12" transform="rotate(-90 30 150)">Frequency</text>
+                            
+                            <!-- X-axis labels -->
+                            <text x="90" y="265" text-anchor="middle" fill="#666" font-size="10">126</text>
+                            <text x="300" y="265" text-anchor="middle" fill="#666" font-size="10">219</text>
+                            <text x="510" y="265" text-anchor="middle" fill="#666" font-size="10">386</text>
+                            
+                            <!-- Legend -->
+                            <g transform="translate(380, 60)">
+                                <line x1="0" y1="0" x2="30" y2="0" stroke="#00d4aa" stroke-width="3" stroke-dasharray="5,5"/>
+                                <text x="35" y="4" fill="#666" font-size="11">Expected (Poisson)</text>
+                                
+                                <line x1="0" y1="20" x2="30" y2="20" stroke="#e91e63" stroke-width="3"/>
+                                <text x="35" y="24" fill="#666" font-size="11">Actual Distribution</text>
+                                
+                                <circle cx="15" cy="40" r="4" fill="#e91e63" opacity="0.8"/>
+                                <text x="35" y="44" fill="#666" font-size="11">Observed Data</text>
+                            </g>
+                        </svg>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 30px;">
+                        <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                            <div style="color: #00d4aa; font-size: 1.2rem; font-weight: bold;">If Poisson</div>
+                            <div style="color: #666; margin-top: 10px;">Variance = Mean</div>
+                            <div style="color: #333; font-size: 1.5rem; font-weight: bold; margin-top: 5px;">219</div>
+                        </div>
+                        <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                            <div style="color: #e91e63; font-size: 1.2rem; font-weight: bold;">Actual</div>
+                            <div style="color: #666; margin-top: 10px;">Variance</div>
+                            <div style="color: #333; font-size: 1.5rem; font-weight: bold; margin-top: 5px;">3,633</div>
+                        </div>
+                        <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                            <div style="color: #666; font-size: 1.2rem; font-weight: bold;">Ratio</div>
+                            <div style="color: #666; margin-top: 10px;">Overdispersion</div>
+                            <div style="color: #e91e63; font-size: 1.5rem; font-weight: bold; margin-top: 5px;">16.6×</div>
+                        </div>
+                    </div>
+                    
+                    <p style="text-align: center; color: #666; margin-top: 30px; font-style: italic;">
+                        The heavy tails and high variance demonstrate that floods no longer follow traditional probability distributions.
+                        <br>This is the statistical signature of climate change.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Anthropocene Section -->
+        <section id="anthropocene" class="anthropocene-section">
+            <div class="section-content">
+                <h2>The Anthropocene Factor</h2>
+                <p style="font-size: 1.2rem; margin-bottom: 40px; opacity: 0.9;">
+                    Human influence fundamentally alters flood probability distributions, transforming rare events into regular occurrences.
+                </p>
+                
+                <div class="impact-grid">
+                    <div class="impact-card">
+                        <h3>White Swan Events</h3>
+                        <p style="margin-bottom: 20px;">Expected, Normal Distribution</p>
+                        <ul>
+                            <li>Seasonal flooding patterns</li>
+                            <li>Regular precipitation cycles</li>
+                            <li>68-95-99.7 rule applies</li>
+                            <li>Events within 3σ expected</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="impact-card">
+                        <h3>Gray Swan Events</h3>
+                        <p style="margin-bottom: 20px;">Knowable Unknowns, Heavy-Tailed</p>
+                        <ul>
+                            <li>100-year flood events</li>
+                            <li>Major hurricanes</li>
+                            <li>Extreme value theory applies</li>
+                            <li>Power law distributions</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="impact-card">
+                        <h3>Black Swan Events</h3>
+                        <p style="margin-bottom: 20px;">Unknown Unknowns, Model Limitations</p>
+                        <ul>
+                            <li>Compound disasters</li>
+                            <li>Cascading system failures</li>
+                            <li>Beyond traditional models</li>
+                            <li>Increasing uncertainty</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="impact-card">
+                        <h3>Anthropogenic Amplification</h3>
+                        <p style="margin-bottom: 20px;">Human-Driven Transformation</p>
+                        <ul>
+                            <li>Climate forcing: ΔT = λ·ΔF</li>
+                            <li>Land use changes increase risk</li>
+                            <li>Infrastructure vulnerability</li>
+                            <li>Shifting λ in Poisson processes</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div style="background: rgba(0,0,0,0.3); padding: 40px; border-radius: 20px; margin-top: 60px; text-align: center;">
+                    <h3 style="color: var(--green); font-size: 1.8rem; margin-bottom: 20px;">Fascinating Ideas</h3>
+                    <p style="font-size: 1.1rem; line-height: 1.8; max-width: 800px; margin: 0 auto;">
+                        Benoit Mandelbrot's critiques of Gaussian models reveal that many natural and economic phenomena 
+                        do not follow the neat, symmetrical bell curve. Instead, they exhibit characteristics of 
+                        "wild randomness" and fractal properties. This challenges our reliance on standard deviations 
+                        to measure risk, as it ignores the possibility of rare but catastrophic events.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Summary Section -->
+        <section id="summary" class="summary-section">
+            <div class="summary-content">
+                <h2>When Rare Becomes Variable</h2>
+                <p style="font-size: 1.3rem; margin-bottom: 60px; opacity: 0.9;">
+                    The transformation of flood statistics reveals a fundamental shift in environmental predictability
+                </p>
+                
+                <div class="summary-points">
+                    <div class="summary-point">
+                        <h3>Statistical Signatures of Change</h3>
+                        <p>The 16.6:1 overdispersion ratio transcends mere statistical anomaly—it represents a fundamental 
+                        restructuring of environmental probability. Where once flood events followed predictable Poisson 
+                        distributions, we now observe clustered extremes and prolonged quiet periods. This variance of 3,633 
+                        against a mean of 219 signals not just increased risk, but the emergence of a new statistical regime 
+                        where traditional models become archaeological relics of a more stable past.</p>
+                    </div>
+                    
+                    <div class="summary-point">
+                        <h3>The Paradox of Modern Prediction</h3>
+                        <p>September 2025 carries an expected value of 219 floods, bounded by confidence intervals of 213-224. 
+                        Yet these numbers tell only part of the story. The significant overdispersion reveals that while we can 
+                        calculate means with precision, the actual manifestation of events has become fundamentally less 
+                        predictable. We face a paradox: as our computational power increases, the phenomena we model become 
+                        more erratic, creating an inverse relationship between technological capability and predictive certainty.</p>
+                    </div>
+                    
+                    <div class="summary-point">
+                        <h3>Reimagining Risk in Non-Stationary Systems</h3>
+                        <p>The 16.6:1 ratio demands a philosophical shift in risk assessment. Traditional infrastructure planning 
+                        assumes statistical stationarity—that the past predicts the future. But when variance exceeds mean by 
+                        such magnitude, we enter a realm of "non-stationary extremes" where hundred-year floods might cluster 
+                        in single decades, followed by unexpected droughts. This requires adaptive infrastructure that can 
+                        respond to both deluge and absence, engineered for flexibility rather than fixed thresholds.</p>
+                    </div>
+                    
+                    <div class="summary-point">
+                        <h3>The Anthropocene as Statistical Phenomenon</h3>
+                        <p>Climate change manifests not merely as shifted means but as transformed probability distributions. 
+                        The consistency of our 219-flood average masks a chaos of extremes—years with 386 floods adjacent to 
+                        years with 126. This statistical signature of the Anthropocene reveals how human influence doesn't 
+                        simply warm or cool, wet or dry, but fundamentally destabilizes the mathematical frameworks we use 
+                        to understand nature. We're not just changing the climate; we're changing the very nature of 
+                        randomness itself.</p>
+                    </div>
+                    
+                    <div class="summary-point">
+                        <h3>Toward Probabilistic Resilience</h3>
+                        <p>Understanding flood variability through the lens of overdispersion points toward a new framework: 
+                        probabilistic resilience. Rather than planning for specific return periods, we must design systems 
+                        that maintain function across vast uncertainty ranges. This means emergency protocols that scale 
+                        dynamically, insurance models that price volatility rather than just risk, and communities educated 
+                        not just about flood zones but about the expanding envelope of possibility that characterizes our 
+                        new environmental reality.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="author">SANDRIA TRAN</div>
+        <div class="date">CS109 | Stanford University | August 2025</div>
+        <div style="margin-top: 20px; opacity: 0.6; font-size: 0.85rem;">
+            Data: NOAA Storm Events Database (1996-2024) | 6,344 September flood events analyzed
+        </div>
+        <div style="margin-top: 10px; color: var(--green); font-size: 0.9rem;">
+            Key Finding: 16.6:1 overdispersion ratio demonstrates increasing flood variability
+        </div>
+    </footer>
+
+    <script>
+        // Custom cursor follower
+        const cursorFollower = document.getElementById('cursor-follower');
+        const cursorDot = document.getElementById('cursor-dot');
+        let mouseX = 0, mouseY = 0;
+        let followerX = 0, followerY = 0;
+        let dotX = 0, dotY = 0;
+        let cursorVisible = false;
+        
+        // Hide cursor when mouse leaves window
+        document.addEventListener('mouseleave', () => {
+            cursorFollower.style.opacity = '0';
+            cursorDot.style.opacity = '0';
+            cursorVisible = false;
+        });
+        
+        document.addEventListener('mouseenter', () => {
+            if (cursorVisible) {
+                cursorFollower.style.opacity = '1';
+                cursorDot.style.opacity = '1';
+            }
+        });
+        
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            
+            // Show cursor on first mouse move
+            if (!cursorVisible) {
+                cursorFollower.style.opacity = '1';
+                cursorDot.style.opacity = '1';
+                cursorVisible = true;
+            }
+            
+            // Instant update for dot
+            cursorDot.style.left = mouseX + 'px';
+            cursorDot.style.top = mouseY + 'px';
+        });
+        
+        // Smooth cursor animation for follower
+        function animateCursor() {
+            const speed = 0.15;
+            followerX += (mouseX - followerX) * speed;
+            followerY += (mouseY - followerY) * speed;
+            
+            cursorFollower.style.left = followerX + 'px';
+            cursorFollower.style.top = followerY + 'px';
+            
+            requestAnimationFrame(animateCursor);
+        }
+        animateCursor();
+        
+        // Expand cursor on hover with better contrast
+        const interactiveElements = document.querySelectorAll('a, button, .swan-circle, .data-card, .impact-card, .process-step, .summary-point');
+        
+        interactiveElements.forEach(element => {
+            element.addEventListener('mouseenter', () => {
+                cursorFollower.style.width = '80px';
+                cursorFollower.style.height = '80px';
+                cursorFollower.style.border = '4px solid rgba(255, 255, 255, 1)';
+                cursorFollower.style.background = 'rgba(255, 255, 255, 0.15)';
+                cursorFollower.style.boxShadow = '0 0 30px rgba(255, 255, 255, 0.6), inset 0 0 20px rgba(255, 255, 255, 0.2)';
+                cursorDot.style.width = '12px';
+                cursorDot.style.height = '12px';
+                cursorDot.style.boxShadow = '0 0 15px rgba(255, 255, 255, 1)';
+            });
+            
+            element.addEventListener('mouseleave', () => {
+                cursorFollower.style.width = '40px';
+                cursorFollower.style.height = '40px';
+                cursorFollower.style.border = '3px solid rgba(255, 255, 255, 0.9)';
+                cursorFollower.style.background = 'rgba(255, 255, 255, 0.1)';
+                cursorFollower.style.boxShadow = '0 0 20px rgba(255, 255, 255, 0.5)';
+                cursorDot.style.width = '8px';
+                cursorDot.style.height = '8px';
+                cursorDot.style.boxShadow = '0 0 10px rgba(255, 255, 255, 0.8)';
+            });
+        });
+        
+        // Special effect for swan circles
+        const swanCircles = document.querySelectorAll('.swan-circle');
+        swanCircles.forEach(circle => {
+            circle.addEventListener('mouseenter', function() {
+                // Enhance cursor for swan circles
+                cursorFollower.style.width = '100px';
+                cursorFollower.style.height = '100px';
+                cursorFollower.style.border = '5px solid rgba(255, 255, 255, 1)';
+                cursorFollower.style.background = 'rgba(255, 255, 255, 0.2)';
+                cursorFollower.style.boxShadow = '0 0 40px rgba(255, 255, 255, 0.8), inset 0 0 30px rgba(255, 255, 255, 0.3)';
+                cursorDot.style.width = '16px';
+                cursorDot.style.height = '16px';
+                cursorDot.style.boxShadow = '0 0 20px rgba(255, 255, 255, 1)';
+                
+                // Scale and effect other circles
+                swanCircles.forEach(c => {
+                    if (c !== this) {
+                        c.style.opacity = '0.5';
+                        c.style.transform = 'scale(0.9)';
+                        c.style.filter = 'blur(1px)';
+                    }
+                });
+                
+                // Enhance current circle
+                this.style.transform = 'scale(1.2)';
+                this.style.zIndex = '100';
+                this.style.boxShadow = '0 20px 40px rgba(0,0,0,0.3)';
+                
+                // Change background based on swan type
+                const className = this.classList[1];
+                if (className === 'white-swan') {
+                    document.body.style.background = 'linear-gradient(135deg, #00d4aa 0%, #00897b 100%)';
+                } else if (className === 'gray-swan') {
+                    document.body.style.background = 'linear-gradient(135deg, #6c757d 0%, #495057 100%)';
+                } else if (className === 'black-swan') {
+                    document.body.style.background = 'linear-gradient(135deg, #000000 0%, #434343 100%)';
+                }
+            });
+            
+            circle.addEventListener('mouseleave', function() {
+                // Reset cursor
+                cursorFollower.style.width = '40px';
+                cursorFollower.style.height = '40px';
+                cursorFollower.style.border = '3px solid rgba(255, 255, 255, 0.9)';
+                cursorFollower.style.background = 'rgba(255, 255, 255, 0.1)';
+                cursorFollower.style.boxShadow = '0 0 20px rgba(255, 255, 255, 0.5)';
+                cursorDot.style.width = '8px';
+                cursorDot.style.height = '8px';
+                cursorDot.style.boxShadow = '0 0 10px rgba(255, 255, 255, 0.8)';
+                
+                // Reset circles
+                swanCircles.forEach(c => {
+                    c.style.opacity = '1';
+                    c.style.transform = 'scale(1)';
+                    c.style.filter = 'none';
+                    c.style.boxShadow = 'none';
+                });
+                this.style.zIndex = 'auto';
+                
+                // Reset background to original magenta gradient
+                document.body.style.background = 'linear-gradient(135deg, #e91e63 0%, #ad1457 100%)';
+            });
+        });
+        
+        // Smooth scrolling for navigation
+        document.querySelectorAll('nav a').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                
+                // Update active state
+                document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Scroll to section
+                const target = document.querySelector(this.getAttribute('href'));
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            });
+        });
+
+        // Update active nav on scroll
+        window.addEventListener('scroll', () => {
+            let current = '';
+            const sections = document.querySelectorAll('section');
+            
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (scrollY >= (sectionTop - 200)) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            document.querySelectorAll('nav a').forEach(a => {
+                a.classList.remove('active');
+                if (a.getAttribute('href').slice(1) === current) {
+                    a.classList.add('active');
+                }
+            });
+        });
+
+        // Add parallax effect to particles
+        window.addEventListener('scroll', () => {
+            const scrolled = window.pageYOffset;
+            const particles = document.querySelectorAll('.particle');
+            
+            particles.forEach((particle, index) => {
+                const speed = 0.5 + (index * 0.2);
+                particle.style.transform = `translateY(${scrolled * speed}px)`;
+            });
+        });
+
+        // Create dynamic particles
+        function createParticle() {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.width = Math.random() * 6 + 2 + 'px';
+            particle.style.height = particle.style.width;
+            particle.style.background = Math.random() > 0.5 ? 'var(--green)' : 'var(--white)';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.top = Math.random() * 100 + '%';
+            particle.style.animationDuration = Math.random() * 20 + 10 + 's';
+            particle.style.animationDelay = Math.random() * 5 + 's';
+            document.body.appendChild(particle);
+            
+            setTimeout(() => {
+                particle.remove();
+            }, 30000);
+        }
+
+        // Create particles periodically
+        setInterval(createParticle, 3000);
+        
+        // Initial particles
+        for (let i = 0; i < 5; i++) {
+            setTimeout(createParticle, i * 500);
+        }
+        
+        // Animate data cards colors
+        const heroDataCards = document.querySelectorAll('.hero-data-card');
+        let colorPhase = 0;
+        
+        setInterval(() => {
+            heroDataCards.forEach((card, index) => {
+                const phase = (colorPhase + index) % 3;
+                if (phase === 0) {
+                    card.style.background = 'rgba(0, 212, 170, 0.2)';
+                    card.style.border = '1px solid rgba(0, 212, 170, 0.4)';
+                    card.querySelector('.number').style.color = '#00d4aa';
+                } else if (phase === 1) {
+                    card.style.background = 'rgba(233, 30, 99, 0.2)';
+                    card.style.border = '1px solid rgba(233, 30, 99, 0.4)';
+                    card.querySelector('.number').style.color = '#e91e63';
+                } else {
+                    card.style.background = 'rgba(255, 255, 255, 0.1)';
+                    card.style.border = '1px solid rgba(255, 255, 255, 0.2)';
+                    card.querySelector('.number').style.color = '#ffffff';
+                }
+            });
+            colorPhase++;
+        }, 2000);
+    </script>
+</body>
+</html>
